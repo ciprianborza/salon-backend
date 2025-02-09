@@ -50,6 +50,21 @@ app.get("/appointments", async (req, res) => {
   res.json(appointments);
 });
 
+// Endpoint pentru ștergerea unei programări
+app.delete("/appointments/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedAppointment = await Appointment.findByIdAndDelete(id);
+    if (!deletedAppointment) {
+      return res.status(404).json({ error: "Programarea nu a fost găsită!" });
+    }
+    res.json({ message: "Programarea a fost ștearsă cu succes!" });
+  } catch (error) {
+    console.error("❌ Eroare la ștergerea programării:", error);
+    res.status(500).json({ error: "A apărut o eroare la ștergerea programării." });
+  }
+});
+
 // Pornirea serverului
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server pornit pe portul ${PORT}`));
