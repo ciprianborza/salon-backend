@@ -65,6 +65,11 @@ app.delete("/appointments/:id", async (req, res) => {
   }
 });
 
+// 🔹 Endpoint nou pentru a menține backend-ul activ
+app.get("/ping", (req, res) => {
+  res.send("🏓 Ping OK - Server activ");
+});
+
 // Pornirea serverului
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server pornit pe portul ${PORT}`));
