@@ -1,85 +1,81 @@
-require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 8080;
 
-// 🔧 CORS corect configurat pentru local + Vercel
-app.use(cors({
-  origin: [
-    "http://localhost:8080",
-    "https://salon-appointments-2ccx3ywdb-ciprians-projects-14325706.vercel.app"
-  ],
-  methods: ["GET", "POST", "DELETE"],
-  credentials: true
-}));
+// 🔐 Domenii permise (inclusiv frontendul de pe Vercel)
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://salon-appointments.vercel.app",
+  "https://salon-appointments-kzba3tenm-ciprians-projects-14325706.vercel.app"
+];
 
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "DELETE"],
+    credentials: true,
+  })
+);
+
+// 🧠 Middleware
 app.use(express.json());
 
-// Conectare la MongoDB
-const mongoURI = process.env.MONGO_URI;
-if (!mongoURI) {
-  console.error("❌ Eroare: MONGO_URI nu este definit în .env!");
-  process.exit(1);
-}
+// 🛠 Conectare MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("✅ Conectat la MongoDB"))
+  .catch((err) => console.error("❌ Eroare MongoDB:", err));
 
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => console.log("✅ Conectat la MongoDB"))
-  .catch((err) => {
-    console.error("❌ Eroare MongoDB:", err);
-    process.exit(1);
-  });
-
-const db = mongoose.connection;
-db.once("open", () => console.log("✅ Conectat la MongoDB"));
-db.on("error", (err) => console.error("❌ Eroare MongoDB:", err));
-
-// Definire model pentru programări
-const AppointmentSchema = new mongoose.Schema({
+// 📘 Schema și model pentru programări
+const appointmentSchema = new mongoose.Schema({
   name: String,
   date: String,
   time: String,
   service: String,
 });
 
-const Appointment = mongoose.model("Appointment", AppointmentSchema);
+const Appointment = mongoose.model("Appointment", appointmentSchema);
 
-// Endpoint pentru salvarea programărilor
-app.post("/appointments", async (req, res) => {
-  const newAppointment = new Appointment(req.body);
-  await newAppointment.save();
-  res.status(201).json(newAppointment);
-});
-
-// Endpoint pentru afișarea programărilor
+// 🟢 Endpoint GET - toate programările
 app.get("/appointments", async (req, res) => {
   const appointments = await Appointment.find();
   res.json(appointments);
 });
 
-// Endpoint pentru ștergerea unei programări
+// 🟣 Endpoint POST - adăugare programare
+app.post("/appointments", async (req, res) => {
+  const newAppointment = new Appointment(req.body);
+  const savedAppointment = await newAppointment.save();
+  res.status(201).json(savedAppointment);
+});
+
+// 🔴 Endpoint DELETE - ștergere programare
 app.delete("/appointments/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedAppointment = await Appointment.findByIdAndDelete(id);
-    if (!deletedAppointment) {
-      return res.status(404).json({ error: "Programarea nu a fost găsită!" });
-    }
-    res.json({ message: "Programarea a fost ștearsă cu succes!" });
-  } catch (error) {
-    console.error("❌ Eroare la ștergerea programării:", error);
-    res.status(500).json({ error: "A apărut o eroare la ștergerea programării." });
-  }
+  await Appointment.findByIdAndDelete(req.params.id);
+  res.status(204).end();
 });
 
-// 🔹 Endpoint nou pentru a menține backend-ul activ
-app.get("/ping", (req, res) => {
-  res.send("🏓 Ping OK - Server activ");
+// 🔄 Ping pentru keep-alive
+app.get("/keep-alive", (req, res) => {
+  res.status(200).send("🔁 Backend activ");
 });
 
-// Pornirea serverului
-const PORT = process.env.PORT;
-app.listen(PORT, () => console.log(`🚀 Server pornit pe portul ${PORT}`));
+// ▶️ Pornire server
+app.listen(PORT, () => {
+  console.log(`🚀 Server pornit pe portul ${PORT}`);
+});
