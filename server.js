@@ -4,7 +4,17 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const app = express();
-app.use(cors());
+
+// 🔧 CORS corect configurat pentru local + Vercel
+app.use(cors({
+  origin: [
+    "http://localhost:8080",
+    "https://salon-appointments-2ccx3ywdb-ciprians-projects-14325706.vercel.app"
+  ],
+  methods: ["GET", "POST", "DELETE"],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Conectare la MongoDB
@@ -73,4 +83,3 @@ app.get("/ping", (req, res) => {
 // Pornirea serverului
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server pornit pe portul ${PORT}`));
- 
