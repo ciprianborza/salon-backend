@@ -4,11 +4,10 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 
 dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// 🔐 Domenii permise pentru frontend (toate subdomeniile tale Vercel)
+// ✅ Domenii permise (inclusiv toate Vercel deployment-uri)
 const allowedOrigins = [
   "http://localhost:3000",
   "https://salon-appointments.vercel.app",
@@ -51,22 +50,26 @@ const appointmentSchema = new mongoose.Schema({
 
 const Appointment = mongoose.model("Appointment", appointmentSchema);
 
+// 🔄 Preia programările
 app.get("/appointments", async (req, res) => {
   const appointments = await Appointment.find();
   res.json(appointments);
 });
 
+// ➕ Adaugă programare
 app.post("/appointments", async (req, res) => {
   const newAppointment = new Appointment(req.body);
   const savedAppointment = await newAppointment.save();
   res.status(201).json(savedAppointment);
 });
 
+// ❌ Șterge programare
 app.delete("/appointments/:id", async (req, res) => {
   await Appointment.findByIdAndDelete(req.params.id);
   res.status(204).end();
 });
 
+// ♻️ Endpoint pentru keep-alive
 app.get("/keep-alive", (req, res) => {
   res.status(200).send("🔁 Backend activ");
 });
