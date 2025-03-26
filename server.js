@@ -8,11 +8,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// 🔐 Domenii permise (inclusiv frontendul de pe Vercel)
+// 🔐 Domenii permise pentru frontend (toate subdomeniile tale Vercel)
 const allowedOrigins = [
   "http://localhost:3000",
   "https://salon-appointments.vercel.app",
-  "https://salon-appointments-kzba3tenm-ciprians-projects-14325706.vercel.app"
+  "https://salon-appointments-new.vercel.app",
+  "https://salon-appointments-new-git-main-ciprians-projects-14325706.vercel.app",
+  "https://salon-appointments-kzba3tenm-ciprians-projects-14325706.vercel.app",
+  "https://salon-appointments-avnb6p43k-ciprians-projects-14325706.vercel.app"
 ];
 
 app.use(
@@ -29,10 +32,8 @@ app.use(
   })
 );
 
-// 🧠 Middleware
 app.use(express.json());
 
-// 🛠 Conectare MongoDB
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
@@ -41,7 +42,6 @@ mongoose
   .then(() => console.log("✅ Conectat la MongoDB"))
   .catch((err) => console.error("❌ Eroare MongoDB:", err));
 
-// 📘 Schema și model pentru programări
 const appointmentSchema = new mongoose.Schema({
   name: String,
   date: String,
@@ -51,31 +51,26 @@ const appointmentSchema = new mongoose.Schema({
 
 const Appointment = mongoose.model("Appointment", appointmentSchema);
 
-// 🟢 Endpoint GET - toate programările
 app.get("/appointments", async (req, res) => {
   const appointments = await Appointment.find();
   res.json(appointments);
 });
 
-// 🟣 Endpoint POST - adăugare programare
 app.post("/appointments", async (req, res) => {
   const newAppointment = new Appointment(req.body);
   const savedAppointment = await newAppointment.save();
   res.status(201).json(savedAppointment);
 });
 
-// 🔴 Endpoint DELETE - ștergere programare
 app.delete("/appointments/:id", async (req, res) => {
   await Appointment.findByIdAndDelete(req.params.id);
   res.status(204).end();
 });
 
-// 🔄 Ping pentru keep-alive
 app.get("/keep-alive", (req, res) => {
   res.status(200).send("🔁 Backend activ");
 });
 
-// ▶️ Pornire server
 app.listen(PORT, () => {
   console.log(`🚀 Server pornit pe portul ${PORT}`);
 });
